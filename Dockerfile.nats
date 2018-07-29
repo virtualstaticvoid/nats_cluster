@@ -1,0 +1,12 @@
+FROM golang:1.10 as builder
+
+COPY nats_bench.go .
+
+RUN go get github.com/nats-io/go-nats
+RUN go build -o bench nats_bench.go
+
+FROM debian:stretch
+
+COPY --from=builder /go/bench /usr/bin/bench
+
+ENTRYPOINT ["/usr/bin/bench"]

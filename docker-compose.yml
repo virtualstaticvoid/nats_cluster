@@ -1,0 +1,68 @@
+---
+version: "3"
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.255.0/24
+      driver: default
+
+services:
+
+  nats_1:
+    image: nats:1.2.0-linux
+    command: -config /etc/nats/nats.conf
+    volumes:
+      - "./nats.conf:/etc/nats/nats.conf"
+
+  nats_2:
+    image: nats:1.2.0-linux
+    command: -config /etc/nats/nats.conf
+    volumes:
+      - "./nats.conf:/etc/nats/nats.conf"
+
+  nats_3:
+    image: nats:1.2.0-linux
+    command: -config /etc/nats/nats.conf
+    volumes:
+      - "./nats.conf:/etc/nats/nats.conf"
+
+  stan_1:
+    image: nats-streaming:0.10.2-linux
+    command: -config /etc/nats/stan.conf -cluster_bootstrap
+    volumes:
+      - "stan_data:/etc/nats/data"
+      - "./stan.conf:/etc/nats/stan.conf"
+
+  stan_2:
+    image: nats-streaming:0.10.2-linux
+    command: -config /etc/nats/stan.conf
+    volumes:
+      - "stan_data:/etc/nats/data"
+      - "./stan.conf:/etc/nats/stan.conf"
+
+  stan_3:
+    image: nats-streaming:0.10.2-linux
+    command: -config /etc/nats/stan.conf
+    volumes:
+      - "stan_data:/etc/nats/data"
+      - "./stan.conf:/etc/nats/stan.conf"
+
+  nats_bench:
+    build:
+      context: .
+      dockerfile: Dockerfile.nats
+    command: -s "nats://nats_1:4222,nats://nats_2:4222,nats://nats_3:4222" -np 10 -ns 10 -n 10000 -ms 5120 nats-bench
+
+  stan_bench:
+    build:
+      context: .
+      dockerfile: Dockerfile.stan
+    command: -s "nats://nats_1:4222,nats://nats_2:4222,nats://nats_3:4222" -np 10 -ns 10 -n 10000 -ms 5120 stan-bench
+
+volumes:
+
+  # shared volume between stan instances!
+  stan_data: {}
